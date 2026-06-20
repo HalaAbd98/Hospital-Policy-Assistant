@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nursing Policy Assistant</title>
+<style>
+  :root {
+    --primary:       #D5E2D0;
+    --primary-dark:  #5D6B66;
+    --accent:        #A8C7B0;
+    --accent-hover:  #8EB59A;
+    --accent-light:  #F4F7F2;
+    --accent-border: #C0D8C4;
+    --bg:            #FCFCFA;
+    --step-divider:  #DDE8DA;
+    --card:          #FFFFFF;
+    --text-main:     #2E3830;
+    --text-muted:    #6B7870;
+    --border-soft:   #D0DDD0;
+    --step-num:      #4C5853;
+    --header-text:   #2E3830;
+    --langbar-text:  #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text-main);
+  }
+  .header {
+    background: var(--primary);
+    color: var(--header-text);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--header-text); }
+  .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .theme-btn {
+    background: rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.12);
+    color: var(--header-text);
+    border-radius: 20px;
+    padding: 6px 13px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .theme-btn:hover { background: rgba(0,0,0,0.14); }
+
+  /* DESIGNER OVERLAY */
+  .theme-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 100;
+    background: rgba(0,0,0,0.45);
+    align-items: center;
+    justify-content: center;
+  }
+  .theme-overlay.open { display: flex; }
+  .theme-panel {
+    background: #fff;
+    border-radius: 20px;
+    width: 520px;
+    max-width: 96vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+    display: flex;
+    flex-direction: column;
+  }
+  .tp-head {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    z-index: 2;
+  }
+  .tp-head h3 { font-size: 16px; font-weight: 700; color: #222; }
+  .tp-head span { font-size: 12px; color: #999; }
+  .tp-close {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #555;
+  }
+  .tp-close:hover { background: #e0e0e0; }
+  .tp-body-wrap { padding: 18px 20px; }
+
+  /* LIVE MINI PREVIEW */
+  .mini-preview {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e8e8e8;
+    margin-bottom: 20px;
+    font-size: 12px;
+  }
+  .mp-header {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+  }
+  .mp-icon { width: 28px; height: 28px; background: rgba(255,255,255,0.2); border-radius: 7px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .mp-title { font-weight: 600; font-size: 13px; }
+  .mp-bar { padding: 6px 14px; display: flex; gap: 5px; }
+  .mp-tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); }
+  .mp-tag.active-tag { color: white; font-weight: 600; }
+  .mp-chat { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .mp-bubble-row { display: flex; gap: 6px; align-items: flex-end; }
+  .mp-bubble-row.right { flex-direction: row-reverse; }
+  .mp-av { width: 22px; height: 22px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; flex-shrink:0; }
+  .mp-bub { padding: 6px 10px; border-radius: 10px; font-size: 11px; max-width: 70%; line-height: 1.4; }
+  .mp-bub.bot { background: white; color: #333; border: 1px solid #eee; }
+  .mp-step { display:flex; gap:5px; align-items:center; margin-top:2px; }
+  .mp-num { width:16px; height:16px; border-radius:50%; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0; }
+
+  /* PRESETS ROW */
+  .preset-label { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .preset-row { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .preset-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .preset-dot:hover { transform: scale(1.15); }
+  .preset-dot.active { border-color: #333; }
+  .preset-dot::after { content: attr(data-name); position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; color: #777; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+  .preset-dot:hover::after { opacity: 1; }
+
+  /* COLOR PICKERS */
+  .picker-section { margin-bottom: 18px; }
+  .picker-section-title { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }
+  .picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .picker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .picker-row:hover { background: #f0f0f0; }
+  .picker-swatch {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 2px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .picker-swatch input[type=color] {
+    position: absolute; inset: -4px;
+    width: calc(100% + 8px); height: calc(100% + 8px);
+    border: none; padding: 0; cursor: pointer; opacity: 0;
+  }
+  .picker-info { flex: 1; min-width: 0; }
+  .picker-name { font-size: 12px; font-weight: 600; color: #333; }
+  .picker-hex { font-size: 11px; color: #888; font-family: monospace; }
+
+  /* ACTION BUTTONS */
+  .tp-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 16px; border-top: 1px solid #eee; }
+  .tp-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .tp-btn:hover { opacity: 0.85; }
+  .tp-btn.apply { background: var(--step-num); color: white; }
+  .tp-btn.reset { background: #f0f0f0; color: #555; }
+  .tp-btn.export { background: var(--accent-hover); color: white; }
+
+  .lang-bar {
+    background: var(--primary-dark);
+    display: flex;
+    gap: 4px;
+    padding: 8px 20px;
+    flex-shrink: 0;
+  }
+  .lang-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .lang-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-weight: 500;
+  }
+  .lang-btn:hover:not(.active) { background: rgba(255,255,255,0.12); color: white; }
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .welcome-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px;
+    border-left: 4px solid var(--accent);
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--accent);
+  }
+  .welcome-card h3 { font-size: 15px; color: var(--text-main); margin-bottom: 8px; }
+  .welcome-card p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px; }
+  .quick-topics { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .quick-btn {
+    padding: 6px 12px;
+    background: var(--accent-light);
+    color: var(--text-main);
+    border: 1px solid var(--accent-border);
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quick-btn:hover { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+  .msg { display: flex; gap: 10px; align-items: flex-start; }
+  .msg.user { flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .bot-avatar { background: var(--step-num); color: #FFFFFF; font-size: 14px; font-weight: 700; }
+  .user-avatar { background: var(--accent-hover); color: #FFFFFF; }
+  .msg-bubble {
+    max-width: 84%;
+    padding: 12px 15px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .bot .msg-bubble {
+    background: var(--card);
+    color: var(--text-main);
+    border-top-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid var(--border-soft);
+  }
+  .user .msg-bubble {
+    background: var(--accent);
+    color: #FFFFFF;
+    border-top-right-radius: 4px;
+  }
+  .step-list { margin-top: 4px; }
+  .step-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--step-divider);
+  }
+  .step-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .step-num {
+    min-width: 26px; height: 26px;
+    background: var(--step-num);
+    color: #ffffff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-text { font-size: 13.5px; color: var(--text-main); line-height: 1.55; }
+  .step-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .step-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-soft);
+  }
+  .step-item.alert .step-num { background: #9e6b5a; }
+  .step-item.alert .step-text { color: #9e6b5a; font-weight: 500; }
+  .typing-bubble {
+    background: var(--card);
+    border-radius: 14px;
+    border-top-left-radius: 4px;
+    padding: 11px 16px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    border: 1px solid var(--border-soft);
+  }
+  .dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%,80%,100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-6px); opacity: 1; }
+  }
+  .input-area {
+    background: var(--card);
+    border-top: 1px solid var(--border-soft);
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+  .input-area textarea {
+    flex: 1;
+    border: 1px solid var(--border-soft);
+    border-radius: 22px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    max-height: 120px;
+    line-height: 1.5;
+    color: var(--text-main);
+    background: var(--accent-light);
+    transition: border-color 0.2s;
+  }
+  .input-area textarea:focus { border-color: var(--accent); background: #FFFFFF; }
+  .input-area textarea::placeholder { color: var(--text-muted); }
+  .send-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #FFFFFF;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .send-btn:hover { background: var(--accent-hover); }
+  .send-btn:active { transform: scale(0.95); }
+  .send-btn:disabled { background: var(--border-soft); cursor: not-allowed; }
+  .disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 6px 16px 0;
+    flex-shrink: 0;
+  }
+  body.rtl .chat-area, body.rtl .input-area, body.rtl .lang-bar,
+  body.rtl .header-left { direction: rtl; }
+  body.rtl .msg.user { flex-direction: row; }
+  body.rtl .msg.bot { flex-direction: row-reverse; }
+  body.rtl .bot .msg-bubble { border-top-left-radius: 14px; border-top-right-radius: 4px; }
+  body.rtl .user .msg-bubble { border-top-right-radius: 14px; border-top-left-radius: 4px; }
+  body.rtl .welcome-card { border-left: 1px solid var(--border-soft); border-right: 4px solid var(--accent); }
+  body.rtl .step-item { flex-direction: row-reverse; }
+  body.rtl .step-text { text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon" style="font-size:18px;font-weight:700;letter-spacing:-1px;color:white;">+</div>
+    <div>
+      <div class="header-title" id="h-title">Nursing Policy Assistant</div>
+      <div class="header-sub" id="h-sub">Quick answers from internal clinical policies</div>
+    </div>
+  </div>
+  <button class="theme-btn" onclick="toggleThemePanel()">Colors</button>
+</div>
+
+<!-- COLOR DESIGNER PANEL -->
+<div class="theme-overlay" id="themeOverlay" onclick="closeThemePanelOutside(event)">
+  <div class="theme-panel">
+    <div class="tp-head">
+      <div>
+        <h3>Color Designer</h3>
+        <span>Changes apply live as you pick</span>
+      </div>
+      <button class="tp-close" onclick="toggleThemePanel()">✕</button>
+    </div>
+    <div class="tp-body-wrap">
+
+      <!-- LIVE MINI PREVIEW -->
+      <div class="mini-preview" id="miniPreview">
+        <div class="mp-header" id="mpHeader">
+          <div class="mp-icon" style="font-size:16px;font-weight:700;color:white;">+</div>
+          <div class="mp-title">Nursing Assistant</div>
+        </div>
+        <div class="mp-bar" id="mpBar">
+          <div class="mp-tag active-tag" id="mpTagActive">English</div>
+          <div class="mp-tag">العربية</div>
+        </div>
+        <div class="mp-chat" id="mpChat" style="background:#f5f5f5">
+          <div class="mp-bubble-row">
+            <div class="mp-av" id="mpBotAv" style="font-size:11px;font-weight:700;">+</div>
+            <div class="mp-bub bot">
+              <div class="mp-step"><div class="mp-num" id="mpNum">1</div><span style="font-size:11px">Perform hand hygiene</span></div>
+              <div class="mp-step"><div class="mp-num" id="mpNum2">2</div><span style="font-size:11px">Clean site with ChloraPrep</span></div>
+            </div>
+          </div>
+          <div class="mp-bubble-row right">
+            <div class="mp-av" id="mpUserAv" style="font-size:11px;font-weight:600;">N</div>
+            <div class="mp-bub" id="mpUserBub" style="color:white; font-size:11px;">How to flush a CVC?</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK PRESETS -->
+      <div class="preset-label">Quick Presets</div>
+      <div class="preset-row" id="presetRow"></div>
+
+      <!-- HEADER COLORS -->
+      <div class="picker-section">
+        <div class="picker-section-title">Header & Navigation</div>
+        <div class="picker-grid">
+          <div class="picker-row" onclick="document.getElementById('c_primary').click()">
+            <div class="picker-swatch" id="sw_primary"><input type="color" id="c_primary" oninput="liveColor('primary',this.value)"></div>
+            <div class="picker-info"><div class="picker-name">Header Bar</div><div class="picker-hex" id="h_primary">#1a3a5c</div></div>
+          </div>
+          <div class="picker-row" onclick="document.getElementById('c_primaryDark').click()">
+            <div class="picker-swatch" id="sw_primaryDark"><input type="color" id="c_primaryDark" oninput="liveColor('primary-dark',this.value)"></div>
+            <div class="picker-info"><div class="picker-name">Language Bar</div><div class="picker-hex" id="h_primaryDark">#122b44</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCENT COLORS -->
+      <div class="picker-section">
+        <div class="picker-section-title">Buttons & Accents</div>
+        <div class="picker-grid">
+          <div class="picker-row" onclick="document.getElementById('c_accent').click()">
+            <div class="picker-swatch" id="sw_accent"><input type="color" id="c_accent" oninput="liveColor('accent',this.value); autoLighten(this.value)"></div>
+            <div class="picker-info"><div class="picker-name">Main Accent</div><div class="picker-hex" id="h_accent">#2a80c8</div></div>
+          </div>
+          <div class="picker-row" onclick="document.getElementById('c_accentHover').click()">
+            <div class="picker-swatch" id="sw_accentHover"><input type="color" id="c_accentHover" oninput="liveColor('accent-hover',this.value)"></div>
+            <div class="picker-info"><div class="picker-name">Hover State</div><div class="picker-hex" id="h_accentHover">#1a6ab0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BACKGROUND -->
+      <div class="picker-section">
+        <div class="picker-section-title">Background</div>
+        <div class="picker-grid">
+          <div class="picker-row" onclick="document.getElementById('c_bg').click()">
+            <div class="picker-swatch" id="sw_bg"><input type="color" id="c_bg" oninput="liveColor('bg',this.value); liveColor('step-divider',this.value)"></div>
+            <div class="picker-info"><div class="picker-name">Page Background</div><div class="picker-hex" id="h_bg">#f0f4f8</div></div>
+          </div>
+          <div class="picker-row" onclick="document.getElementById('c_accentLight').click()">
+            <div class="picker-swatch" id="sw_accentLight"><input type="color" id="c_accentLight" oninput="liveColor('accent-light',this.value)"></div>
+            <div class="picker-info"><div class="picker-name">Button Fill (light)</div><div class="picker-hex" id="h_accentLight">#eaf3fb</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP NUMBERS -->
+      <div class="picker-section">
+        <div class="picker-section-title">Step Number Circles</div>
+        <div class="picker-grid">
+          <div class="picker-row" onclick="document.getElementById('c_stepNum').click()">
+            <div class="picker-swatch" id="sw_stepNum"><input type="color" id="c_stepNum" oninput="liveStepNum(this.value)"></div>
+            <div class="picker-info"><div class="picker-name">Step Numbers</div><div class="picker-hex" id="h_stepNum">#1a3a5c</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tp-actions">
+        <button class="tp-btn reset" onclick="resetColors()">↩ Reset</button>
+        <button class="tp-btn export" onclick="exportCSS()">⬇ Export Colors</button>
+        <button class="tp-btn apply" onclick="toggleThemePanel()">✓ Done</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">EN — English</button>
+  <button class="lang-btn" onclick="setLang('ar')">AR — العربية</button>
+  <button class="lang-btn" onclick="setLang('tl')">PH — Filipino</button>
+  <button class="lang-btn" onclick="setLang('hi')">HI — हिंदी</button>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <div class="welcome-card" id="welcomeCard">
+    <h3 id="wc-title">Welcome, Nurse!</h3>
+    <p id="wc-body">Ask me any quick question about our clinical policies — CVC care, chemotherapy, medication safety, blood transfusion, extravasation, spill management, and more. I will give you clear numbered steps.</p>
+    <div class="quick-topics" id="quickTopics"></div>
+  </div>
+</div>
+
+<div class="disclaimer" id="disclaimer-text">For quick reference only. Always follow full policy documents and consult senior staff for complex clinical decisions.</div>
+
+<div class="input-area">
+  <textarea id="userInput" rows="1" placeholder="Type your question here..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+  <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+</div>
+
+<script>
+// ═══════════════ COLOR DESIGNER ═══════════════
+const PRESETS = [
+  { name:'Ocean',   primary:'#1a3a5c', primaryDark:'#122b44', accent:'#2a80c8', accentHover:'#1a6ab0', accentLight:'#eaf3fb', bg:'#f0f4f8' },
+  { name:'Emerald', primary:'#1a4a35', primaryDark:'#0f3224', accent:'#27a060', accentHover:'#1e8050', accentLight:'#e6f7ee', bg:'#f0f8f3' },
+  { name:'Purple',  primary:'#3a1a5c', primaryDark:'#2a1044', accent:'#7c3aed', accentHover:'#6d28d9', accentLight:'#f3eeff', bg:'#f5f0ff' },
+  { name:'Rose',    primary:'#5c1a35', primaryDark:'#44102a', accent:'#e11d74', accentHover:'#c0155f', accentLight:'#ffeef6', bg:'#fff0f6' },
+  { name:'Slate',   primary:'#2d3748', primaryDark:'#1a202c', accent:'#4a5568', accentHover:'#2d3748', accentLight:'#f0f1f3', bg:'#edf0f5' },
+  { name:'Sunset',  primary:'#5c2e1a', primaryDark:'#44200f', accent:'#e8650a', accentHover:'#c95508', accentLight:'#fff3ea', bg:'#fff8f0' },
+  { name:'Teal',    primary:'#0d4a52', primaryDark:'#083840', accent:'#0e9aab', accentHover:'#0b7e8d', accentLight:'#e0f7fa', bg:'#f0fafc' },
+  { name:'Gold',    primary:'#4a3600', primaryDark:'#332500', accent:'#c9920a', accentHover:'#a87908', accentLight:'#fff8e0', bg:'#fffbf0' },
+];
+
+const DEFAULT = PRESETS[0];
+
+let customStepNum = DEFAULT.primary;
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+function lighten(hex, amt) {
+  let {r,g,b} = hexToRgb(hex);
+  r = Math.min(255, r + amt); g = Math.min(255, g + amt); b = Math.min(255, b + amt);
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function darken(hex, amt) { return lighten(hex, -amt); }
+
+function setVar(name, val) { document.documentElement.style.setProperty('--'+name, val); }
+
+function liveColor(varName, val) {
+  setVar(varName, val);
+  const map = { 'primary':'sw_primary','primary-dark':'sw_primaryDark','accent':'sw_accent','accent-hover':'sw_accentHover','accent-light':'sw_accentLight','bg':'sw_bg' };
+  const hexMap = { 'primary':'h_primary','primary-dark':'h_primaryDark','accent':'h_accent','accent-hover':'h_accentHover','accent-light':'h_accentLight','bg':'h_bg' };
+  if (map[varName]) { document.getElementById(map[varName]).style.background = val; document.getElementById(hexMap[varName]).textContent = val; }
+  updatePreview();
+}
+
+function liveStepNum(val) {
+  customStepNum = val;
+  document.getElementById('sw_stepNum').style.background = val;
+  document.getElementById('h_stepNum').textContent = val;
+  document.querySelectorAll('.step-num').forEach(el => el.style.background = val);
+  updatePreview();
+}
+
+function autoLighten(accentHex) {
+  const hover = darken(accentHex, 18);
+  const light = lighten(accentHex, 110);
+  setVar('accent-hover', hover);
+  setVar('accent-light', light);
+  document.getElementById('sw_accentHover').style.background = hover;
+  document.getElementById('h_accentHover').textContent = hover;
+  document.getElementById('c_accentHover').value = hover;
+  document.getElementById('sw_accentLight').style.background = light;
+  document.getElementById('h_accentLight').textContent = light;
+  document.getElementById('c_accentLight').value = light;
+}
+
+function applyPreset(p) {
+  const pairs = [
+    ['primary', p.primary], ['primary-dark', p.primaryDark],
+    ['accent', p.accent], ['accent-hover', p.accentHover],
+    ['accent-light', p.accentLight], ['bg', p.bg], ['step-divider', p.bg],
+    ['accent-border', lighten(p.accent, 70)],
+  ];
+  pairs.forEach(([k,v]) => setVar(k,v));
+  customStepNum = p.primary;
+  document.querySelectorAll('.step-num').forEach(el => el.style.background = p.primary);
+  syncPickerUI({ primary: p.primary, primaryDark: p.primaryDark, accent: p.accent, accentHover: p.accentHover, accentLight: p.accentLight, bg: p.bg });
+  updatePreview();
+}
+
+function syncPickerUI(vals) {
+  const m = { primary:'c_primary', primaryDark:'c_primaryDark', accent:'c_accent', accentHover:'c_accentHover', accentLight:'c_accentLight', bg:'c_bg' };
+  const sw = { primary:'sw_primary', primaryDark:'sw_primaryDark', accent:'sw_accent', accentHover:'sw_accentHover', accentLight:'sw_accentLight', bg:'sw_bg' };
+  const hx = { primary:'h_primary', primaryDark:'h_primaryDark', accent:'h_accent', accentHover:'h_accentHover', accentLight:'h_accentLight', bg:'h_bg' };
+  Object.entries(vals).forEach(([k,v]) => {
+    if (m[k]) { document.getElementById(m[k]).value = v; document.getElementById(sw[k]).style.background = v; document.getElementById(hx[k]).textContent = v; }
+  });
+  document.getElementById('sw_stepNum').style.background = vals.primary;
+  document.getElementById('h_stepNum').textContent = vals.primary;
+  document.getElementById('c_stepNum').value = vals.primary;
+}
+
+function updatePreview() {
+  const p = getComputedStyle(document.documentElement);
+  const primary = p.getPropertyValue('--primary').trim();
+  const primaryDark = p.getPropertyValue('--primary-dark').trim();
+  const accent = p.getPropertyValue('--accent').trim();
+  const bg = p.getPropertyValue('--bg').trim();
+  document.getElementById('mpHeader').style.background = primary;
+  document.getElementById('mpBar').style.background = primaryDark;
+  document.getElementById('mpTagActive').style.background = accent;
+  document.getElementById('mpTagActive').style.borderColor = accent;
+  document.getElementById('mpBotAv').style.background = primary;
+  document.getElementById('mpUserAv').style.background = accent;
+  document.getElementById('mpUserBub').style.background = accent;
+  document.getElementById('mpChat').style.background = bg;
+  document.getElementById('mpNum').style.background = customStepNum;
+  document.getElementById('mpNum2').style.background = customStepNum;
+}
+
+function buildPresets() {
+  const row = document.getElementById('presetRow');
+  row.innerHTML = '';
+  PRESETS.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'preset-dot';
+    d.title = p.name;
+    d.dataset.name = p.name;
+    d.style.background = `linear-gradient(135deg, ${p.primary} 50%, ${p.accent} 50%)`;
+    d.onclick = () => { applyPreset(p); document.querySelectorAll('.preset-dot').forEach(x=>x.classList.remove('active')); d.classList.add('active'); };
+    row.appendChild(d);
+  });
+  row.children[0].classList.add('active');
+}
+
+function resetColors() { applyPreset(DEFAULT); document.querySelectorAll('.preset-dot').forEach((d,i)=>d.classList.toggle('active',i===0)); }
+
+function exportCSS() {
+  const p = getComputedStyle(document.documentElement);
+  const vars = ['--primary','--primary-dark','--accent','--accent-hover','--accent-light','--accent-border','--bg','--step-divider'];
+  let css = ':root {\n';
+  vars.forEach(v => { css += `  ${v}: ${p.getPropertyValue(v).trim()};\n`; });
+  css += `  /* step number color: ${customStepNum} */\n`;
+  css += '}';
+  const blob = new Blob([css], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nursing-chatbot-colors.css';
+  a.click();
+}
+
+function toggleThemePanel() {
+  const o = document.getElementById('themeOverlay');
+  const opening = !o.classList.contains('open');
+  o.classList.toggle('open');
+  if (opening) { buildPresets(); syncPickerUI({ primary: DEFAULT.primary, primaryDark: DEFAULT.primaryDark, accent: DEFAULT.accent, accentHover: DEFAULT.accentHover, accentLight: DEFAULT.accentLight, bg: DEFAULT.bg }); updatePreview(); }
+}
+function closeThemePanelOutside(e) { if (e.target === document.getElementById('themeOverlay')) toggleThemePanel(); }
+// ════════════════════════════════════════════════
+
+const POLICIES = `
+1. CVC CARE (NHS):
+- CVCs include temporary, tunnelled (Hickman/Broviac), PICC, and umbilical venous catheters.
+- Dressings changed weekly with sterile transparent semipermeable dressing; more often if loose/soiled/wet.
+- Site cleaned with 2% chlorhexidine in 70% isopropyl alcohol (ChloraPrep), back-and-forth 30 seconds, allow to dry.
+- BioPatch applied at insertion and with each weekly dressing change for minimum 3 weeks post insertion. NOT for neonates <1kg or impaired skin integrity.
+- All patients (except cardiac) use Octenisan wash 4 days post-procedure then every Monday and Thursday. Cardiac patients: daily until pacing wires/drains removed.
+- Use 10ml syringes for flushing central lines. Smaller syringes only if absolutely necessary.
+- Catheter hub scrubbed minimum 15 seconds with 2% chlorhexidine in 70% isopropyl alcohol before access.
+- Flush with push-pause technique; clamp while maintaining positive pressure.
+- Normal saline 0.9% if catheter accessed less than 12 hourly. Heparin 100units/ml (0.5-2ml) if accessed less frequently than 12 hourly.
+- Extravasation and Phlebitis score every hour during infusions; at least 12 hourly when not in use.
+- Visual infection score every 12 hours. Score 0 = no action. Score 1 = possible infection, senior nurse review. Score 2 = probable bacteraemia, urgent medical review, consider line removal, follow Sepsis 6 pathway.
+- Air embolus signs: confusion, cyanosis, hypotension, collapse. Action: turn patient left side, Trendelenberg position, oxygen, seek medical help immediately.
+- Blocked line: check clamp, kinking, microclave blockage. Use 10ml saline push/pull. If fails: assess for thrombus/extravasation, request CXR, consider Urokinase or Alteplase.
+- Administration sets: changed every 96 hours or immediately if contaminated. Blood product lines: after each transfusion or every 12 hours.
+- MicroClave connectors: scrub hub 30 seconds before and after access; can remain up to 7 days or 600 activations.
+- Consent required before insertion. MSSA/MRSA swab required pre-insertion.
+- Tunnelled CVC removal: liaise with Vascular Access Service. Temporary CVC removal: check coagulation/platelet count.
+
+2. NEEDLELESS CONNECTOR CHANGE:
+- Use sterile technique; open package and inspect integrity.
+- Prime new connector with preservative-free normal saline before attaching.
+- Clamp catheter, remove old connector, scrub hub vigorously 5 seconds with antiseptic pad, allow to dry, attach new primed connector.
+- After attachment: aspirate for blood return, flush with saline.
+- Place disinfectant-containing end cap after procedure.
+
+3. TUNNELLED CATHETER BLOOD SAMPLING (DISCARD METHOD):
+- Stop any infusions temporarily; identify largest lumen for sampling.
+- Scrub needleless connector vigorously 5 seconds with antiseptic pad, allow to dry.
+- Confirm blood return with saline flush first.
+- Aspirate and discard 4-5ml blood (discard sample).
+- Collect required sample, then flush catheter with saline, then lock if no continuous infusion.
+- Label samples in presence of patient; send to lab immediately.
+
+4. TUNNELLED CATHETER DRESSING CHANGE:
+- Both patient and nurse wear masks (especially for dialysis catheters).
+- Remove old dressing; assess site for bleeding, redness, tenderness, swelling, drainage.
+- Put on sterile gloves; measure external catheter length and compare with documented length.
+- Clean exit site with alcoholic chlorhexidine (30 seconds, allow to dry) or povidone-iodine (concentric circles, allow to dry).
+- Apply chlorhexidine-impregnated dressing at catheter base if applicable.
+- Apply transparent semipermeable sterile dressing over exit site.
+- Label dressing with date.
+
+5. TUNNELLED CATHETER FLUSHING AND LOCKING:
+- Scrub needleless connector 5 seconds with antiseptic, allow to dry.
+- Attach 10ml saline syringe, unclamp, aspirate for blood return.
+- If blood return: flush slowly with saline (minimum twice the internal volume of catheter).
+- If medication infused: flush before and after with saline.
+- After flushing: lock catheter with locking solution if not on continuous infusion.
+- Place disinfectant-containing end cap on needleless connector.
+- Repeat for each lumen.
+
+6. CHEMOTHERAPY PREPARATION AND HANDLING:
+- Wear full PPE: inner + outer gloves, gown, goggles/face shield, shoe covers.
+- Change gloves every 30 minutes or if torn/contaminated. Wash hands before putting on new gloves.
+- Prepare in Class II Biological Safety Cabinet (BSC); blower on 24/7.
+- Cover work surface with plastic absorbent pad; discard in cytotoxic waste after use.
+- Work below eye level.
+- Use closed-system transfer device when reconstituting.
+- Label drugs with patient name, drug name, dose, volume, route, expiry, preparation time, sequencing.
+- Transport in sealed, labeled sealable bag.
+- Have second qualified person independently verify order before preparation.
+
+7. CHEMOTHERAPY IV ADMINISTRATION:
+- Verify: patient height/weight/BSA, drug dosage calculation, allergies, lab results, consent.
+- Second nurse independently verifies order before administration.
+- Pre-medicate as prescribed before chemotherapy.
+- Use central venous access or implanted port for vesicant drugs infusing more than 30 minutes.
+- Establish blood return before every administration regardless of access type.
+- Change PPE gloves every 30 minutes.
+- Monitor closely for hypersensitivity reaction and extravasation throughout infusion.
+- For peripheral vesicant: stay with patient; check blood return every 2-5ml (push) or every 5 minutes (infusion).
+- Flush line with saline after completion.
+- Discard all chemotherapy waste in cytotoxic hazardous-waste container.
+- Wash hands with soap and water after removing PPE.
+
+8. ORAL CHEMOTHERAPY ADMINISTRATION:
+- Verify order, patient weight/BSA, dosage calculation; second person double-checks.
+- Check for contraindications and expiry.
+- Assess patient's ability to swallow.
+- Wear chemotherapy gloves; use two pairs if splashing is possible.
+- Stay until patient has swallowed the medication; check mouth if patient is confused.
+- Monitor closely for adverse reactions after administration.
+- Discard PPE in hazardous waste container; wash hands with soap and water.
+
+9. EXTRAVASATION (CVC/PICC):
+- STOP infusion immediately if extravasation suspected.
+- Do NOT flush the device; aspirate slowly from catheter with 3-5ml syringe.
+- Outline visible extravasation area with skin marker; estimate volume escaped.
+- Notify physician immediately.
+- Apply sterile transparent occlusive dressing to affected area.
+- Insert new IV catheter in different location.
+- Follow facility extravasation treatment protocol; administer antidote as prescribed.
+- Document, photograph/measure affected area, complete risk management report.
+- Monitor site continuously; reassess pain.
+
+10. HAZARDOUS DRUG SPILL MANAGEMENT:
+- Assess spill size; call for trained assistance if large.
+- Post hazardous drug precaution sign immediately.
+- Don full PPE: inner + outer gloves, gown, shoe covers, face shield, goggles, respirator. For large spill: chemical cartridge-type respirator with full facepiece.
+- Hard surface: pick up broken glass with scoop/heavy gloves, place in puncture-proof container. Use absorbent pad for liquid; damp towel for powder/solid.
+- Soft surface: use absorbent powder (not towels); vacuum with dedicated hazardous drug vacuum after.
+- BSC spill: pick up glass; clean with absorbent pad or damp towel; decontaminate. If HEPA filter contaminated: seal BSC, label contaminated, schedule technician.
+- Place all waste in double-bagged, labeled hazardous waste containers.
+- Rinse contaminated area with water then deactivate/decontaminate per manufacturer instructions. Rinse several times.
+- Remove PPE carefully while keeping inner gloves on until last. Place all PPE in hazardous waste bag.
+- Report and document the spill.
+
+11. SAFE MEDICATION ADMINISTRATION:
+- Order must include: patient name, date/time, drug name, dose, route, frequency, prescriber signature, indication.
+- Confirm patient identity with at least two identifiers before every medication.
+- Reconcile medications on every new order.
+- Verify allergies and current medications with patient at each encounter.
+- Two licensed practitioners must verify dosage calculations; use automated calculations when possible.
+- High-alert medications require extra monitoring; review lab values.
+- Minimize verbal orders; always read back to prescriber.
+- Administer time-critical medications within 1 hour before or after scheduled time (for medications given more than once daily).
+- Document effectiveness and any adverse effects; report errors through facility event-reporting system.
+- Do Not Use abbreviation list must be posted where medications are prepared.
+
+12. BLOOD CULTURE SAMPLE COLLECTION:
+- Verify order; confirm patient identity with two identifiers.
+- Hand hygiene before and after; wear gloves.
+- Avoid tourniquet if possible; if needed, apply proximal to site, release within 1 minute.
+- Clean site with alcoholic chlorhexidine gluconate (back-and-forth 30 seconds, allow to dry) or povidone-iodine (concentric circles from puncture site outward, allow to dry).
+- Disinfect blood culture bottle tops with alcohol pads; allow to dry.
+- Draw blood for culture BEFORE other lab tests.
+- If syringe used: inject appropriate volume into culture bottles; invert gently 8-10 times.
+- Label bottles in presence of patient.
+- Send to lab in biohazard transport bag within 2 hours of collection.
+
+13. IMPLANTED PORT ACCESSING:
+- Confirm catheter tip placement verified. Check for allergies to antiseptic/anesthetic.
+- Assess port site: no needle insertion if swelling, redness, pain, drainage, port erosion, or thrombosis signs.
+- Use strict sterile/no-touch technique; full sterile drape and sterile gloves.
+- Clean site with antiseptic; allow to dry completely.
+- Prime noncoring needle extension set with saline before insertion.
+- Insert noncoring needle perpendicular through septum until it contacts the port base.
+- Aspirate for blood return; if none: have patient change position, raise arms, deep breathe, cough. If still no return: notify physician.
+- Secure needle; apply chlorhexidine-impregnated sponge dressing and transparent semipermeable dressing.
+- Label dressing with date.
+
+14. IMPLANTED PORT BLOOD SAMPLING (DISCARD METHOD):
+- Stop any infusions through port before sampling.
+- Assess skin over port for infection, thrombosis, rotation, erosion.
+- Scrub needleless connector 5 seconds with antiseptic; allow to dry.
+- Flush with saline; confirm blood return.
+- Aspirate and discard initial blood volume (discard sample).
+- Collect required blood samples in correct order of draw.
+- Flush with saline after sampling; lock port with prescribed locking solution.
+- Label samples in presence of patient; send to lab immediately.
+- Notify physician of critical results within facility time frame.
+
+15. BLOOD TRANSFUSION ADVERSE REACTIONS (KFSH):
+- Localized urticaria: do NOT stop transfusion, slow rate and notify physician.
+- Generalized urticaria: STOP transfusion, notify physician.
+- Hemolysis, fever above 1 degree C above 37C, anaphylaxis, chills, chest/back pain, dyspnea, hypotension, hypertension, nausea, vomiting, hematuria, or any other adverse reaction: STOP transfusion immediately, notify physician, hang new bag of normal saline with new IV tubing, keep IV line open.
+- Two authorized HCPs recheck: patient name/MRN, product type/number, ABO/Rh, expiry date.
+- Notify Blood Bank by phone of all reactions immediately.
+- Physician orders Transfusion Reaction Work-up in PowerChart or Blood Bank Downtime Form during downtime.
+- Collect blood sample: older than 3 years = 5ml purple top tube; 3 years or younger = full micro container purple top.
+- Complete Blood Bank Transfusion Reaction Form Ref 7284. Send blood sample, blood bag, tubing, and pink copy of form to Blood Bank.
+- Obtain voided urine specimen; send to Microbiology for urinalysis.
+- For febrile reaction only: order blood culture from patient.
+- Document all reactions in patient medical record. Report through QIS.
+`;
+
+const LANG = {
+  en: {
+    header: 'Nursing Policy Assistant',
+    subheader: 'Quick answers from internal clinical policies',
+    welcome_title: 'Welcome, Nurse!',
+    welcome_body: 'Ask me any quick question about our clinical policies. I will give you clear, numbered steps — no long paragraphs.',
+    placeholder: 'Type your question here...',
+    disclaimer: 'For quick reference only. Always follow full policy documents and consult senior staff for complex decisions.',
+    quick: ['CVC dressing change', 'Chemo spill protocol', 'Blood transfusion reaction', 'Flush tunneled catheter', 'Extravasation management', 'Safe medication check'],
+    outputLang: 'English',
+    noAnswer: "This is not covered in our policies. Please check with your charge nurse or supervisor.",
+    system: `You are a clinical nursing policy assistant. Answer ONLY based on the policies provided.
+
+LANGUAGE RULE: The user may write in English, Arabic, or a mix of both languages. 
+- Detect which language is most dominant in the question.
+- Always reply in ONE language only — either pure English OR pure Arabic. Never mix both languages in your answer.
+- If the question is mostly Arabic: reply entirely in Arabic.
+- If the question is mostly English: reply entirely in English.
+- If the question is mixed 50/50: reply in English.
+
+FORMAT RULE — CRITICAL:
+- ALWAYS respond as numbered steps. Never write paragraphs.
+- Format: Step 1: [action]. Step 2: [action]. etc.
+- Each step must be one clear action, maximum 15 words.
+- Maximum 8 steps per answer.
+- After the steps, add one short "Note:" line only if critically important.
+- If the topic is not in the policies, say: "This is not in our policies. Please check with your charge nurse."
+
+OUTPUT FORMAT (use this exact structure):
+**[Topic Name]**
+Step 1: [first action]
+Step 2: [second action]
+...
+Note: [critical note if needed]
+
+POLICIES:
+${POLICIES}`
+  },
+  ar: {
+    header: 'مساعد سياسات التمريض',
+    subheader: 'إجابات سريعة من السياسات السريرية الداخلية',
+    welcome_title: 'أهلاً وسهلاً!',
+    welcome_body: 'اسأل أي سؤال عن بروتوكولات العمل — القسطرة الوريدية، العلاج الكيميائي، الأدوية، نقل الدم، وغيرها. بترد عليك بخطوات واضحة ومرتبة.',
+    placeholder: 'اكتب سؤالك هنا...',
+    disclaimer: 'للمراجعة السريعة فقط. ارجع دائماً للبروتوكول الكامل وتشاور مع المشرف عند الحاجة.',
+    quick: ['تغيير ضمادة القسطرة', 'انسكاب دواء كيماوي', 'تفاعل نقل الدم', 'فلاش القسطرة النفقية', 'تسرب الدواء للأنسجة', 'التحقق من الدواء قبل إعطائه'],
+    outputLang: 'Arabic',
+    noAnswer: "هذا الموضوع مو موجود في بروتوكولاتنا. تواصل مع المشرف أو الممرضة المسؤولة.",
+    system: `أنت ممرضة سريرية خبيرة في مستشفى خليجي، بتساعد زميلاتك بالإجابة على أسئلة البروتوكولات والسياسات.
+
+═══ قاعدة اللغة ═══
+- المستخدم ممكن يكتب عربي أو إنجليزي أو خليط.
+- ردّك يكون بالعربية دائماً — سواء السؤال عربي أو إنجليزي أو مختلط.
+- الكلمات الطبية المعروفة بالإنجليزي (مثل: CVC، flush، IV، PPE، ANTT، BioPatch، ChloraPrep) اتركها إنجليزي — هذا طبيعي في بيئة المستشفى.
+- ما تترجم الكلمات الطبية الإنجليزية ترجمة حرفية. مثلاً: قل "فلاش القسطرة" مو "شطف الأنبوب"، وقل "ضمادة شفافة" مو "ضماد نصف منفذ شفاف معقم".
+
+═══ أسلوب الكتابة ═══
+- اكتب بأسلوب عربي طبيعي وسلس، كأنك تشرحين لزميلتك في الشيفت.
+- استخدم جمل قصيرة ومباشرة — تجنب الجمل الطويلة والمركبة.
+- لا تترجم حرفياً من الإنجليزي — فكر بالعربية من البداية.
+- تجنب الأسلوب الرسمي الثقيل. مثلاً: قل "تأكد من" بدل "يتعين التحقق من"، وقل "نظّف المكان" بدل "قم بتطهير الموقع".
+- الأفعال تبدأ بصيغة الأمر المباشر: "نظّف"، "افتح"، "تحقق"، "أبلغ".
+
+═══ قاعدة التنسيق ═══
+- ردّك يكون خطوات مرقّمة فقط — بدون فقرات أو جمل طويلة.
+- التنسيق: الخطوة 1: [الإجراء]. الخطوة 2: [الإجراء]. إلخ.
+- كل خطوة: جملة واحدة قصيرة وواضحة، بحد أقصى 12 كلمة.
+- بحد أقصى 8 خطوات.
+- أضف "ملاحظة:" فقط لو في معلومة مهمة جداً ما تنحذف.
+- لو الموضوع مو في البروتوكولات: "هذا مو موجود في بروتوكولاتنا — تواصل مع المشرف."
+
+═══ أمثلة على الأسلوب الصح ═══
+❌ غلط: "يتعين على الممرضة القيام بتطهير موقع الإدخال باستخدام محلول كلورهيكسيدين الكحولي بنسبة اثنين بالمئة"
+✓ صح: "نظّف موقع الإدخال بـ ChloraPrep ودعيه يجف"
+
+❌ غلط: "قم بإيقاف التسريب فوراً عند الاشتباه بحدوث تسرب وعائي"
+✓ صح: "أوقف الإعطاء فوراً لو اشتبهت بتسرب"
+
+❌ غلط: "الخطوة الأولى تتضمن التحقق من هوية المريض باستخدام معرّفين على الأقل"
+✓ صح: "تحقق من هوية المريض بطريقتين"
+
+═══ تنسيق الإخراج ═══
+**[اسم الإجراء]**
+الخطوة 1: [الإجراء]
+الخطوة 2: [الإجراء]
+...
+ملاحظة: [لو لازم]
+
+البروتوكولات:
+${POLICIES}`
+  },
+  tl: {
+    header: 'Nursing Policy Assistant',
+    subheader: 'Mabilis na sagot mula sa mga panloob na patakaran',
+    welcome_title: 'Maligayang pagdating, Nars!',
+    welcome_body: 'Magtanong ng kahit anong tanong tungkol sa aming mga klinikal na patakaran. Bibigyan kita ng malinaw, may bilang na mga hakbang.',
+    placeholder: 'I-type ang iyong tanong dito...',
+    disclaimer: 'Para sa mabilis na sanggunian lamang. Laging sundin ang mga kumpletong patakaran at kumonsulta sa senior staff.',
+    quick: ['Pagpapalit ng CVC dressing', 'Chemo spill protocol', 'Reaksyon sa blood transfusion', 'Pag-flush ng tunneled catheter', 'Pamamahala ng extravasation', 'Ligtas na pag-check ng gamot'],
+    outputLang: 'Filipino',
+    noAnswer: "Hindi ito nasa aming mga patakaran. Pakiusap makipag-usap sa iyong charge nurse.",
+    system: `Ikaw ay isang clinical nursing policy assistant. Sumagot lamang batay sa mga patakarang nakalista.
+
+PATAKARAN SA WIKA: Palaging sumagot sa Filipino/Tagalog, anuman ang wika ng tanong.
+
+PATAKARAN SA FORMAT — MAHALAGA:
+- LAGING sumagot bilang mga may bilang na hakbang. Huwag kailanman sumulat ng mga talata.
+- Format: Hakbang 1: [aksyon]. Hakbang 2: [aksyon]. atbp.
+- Ang bawat hakbang ay isang malinaw na aksyon, maximum 15 salita.
+- Maximum 8 hakbang bawat sagot.
+- Pagkatapos ng mga hakbang, magdagdag ng isang "Tandaan:" linya kung kritikal.
+- Kung ang paksa ay wala sa mga patakaran, sabihin: "Hindi ito nasa aming mga patakaran. Makipag-usap sa iyong charge nurse."
+
+OUTPUT FORMAT:
+**[Pangalan ng Paksa]**
+Hakbang 1: [unang aksyon]
+Hakbang 2: [pangalawang aksyon]
+...
+Tandaan: [kritikal na tala kung kinakailangan]
+
+MGA PATAKARAN:
+${POLICIES}`
+  },
+  hi: {
+    header: 'नर्सिंग पॉलिसी असिस्टेंट',
+    subheader: 'आंतरिक नैदानिक नीतियों से त्वरित उत्तर',
+    welcome_title: 'नमस्ते, नर्स!',
+    welcome_body: 'हमारी नैदानिक नीतियों के बारे में कोई भी प्रश्न पूछें। आपको स्पष्ट, क्रमांकित चरण मिलेंगे — लंबे पैराग्राफ नहीं।',
+    placeholder: 'यहाँ अपना प्रश्न लिखें...',
+    disclaimer: 'केवल त्वरित संदर्भ के लिए। हमेशा पूर्ण नीति दस्तावेजों का पालन करें।',
+    quick: ['CVC ड्रेसिंग बदलना', 'कीमो स्पिल प्रोटोकॉल', 'रक्त आधान प्रतिक्रिया', 'कैथेटर फ्लश करना', 'एक्सट्रावेसेशन प्रबंधन', 'दवा सुरक्षा जांच'],
+    outputLang: 'Hindi',
+    noAnswer: "यह हमारी नीतियों में नहीं है। कृपया अपनी चार्ज नर्स से जांच करें।",
+    system: `आप एक क्लिनिकल नर्सिंग पॉलिसी असिस्टेंट हैं। केवल नीचे दी गई नीतियों के आधार पर उत्तर दें।
+
+भाषा नियम: हमेशा हिंदी में उत्तर दें, चाहे प्रश्न किसी भी भाषा में हो।
+
+प्रारूप नियम — महत्वपूर्ण:
+- हमेशा क्रमांकित चरणों के रूप में उत्तर दें। कभी पैराग्राफ न लिखें।
+- प्रारूप: चरण 1: [कार्य]। चरण 2: [कार्य]। आदि।
+- प्रत्येक चरण एक स्पष्ट कार्य, अधिकतम 15 शब्द।
+- प्रति उत्तर अधिकतम 8 चरण।
+- चरणों के बाद, केवल यदि अत्यंत आवश्यक हो तो "नोट:" जोड़ें।
+- यदि विषय नीतियों में नहीं है, तो कहें: "यह हमारी नीतियों में नहीं है। अपनी चार्ज नर्स से जांच करें।"
+
+आउटपुट प्रारूप:
+**[विषय का नाम]**
+चरण 1: [पहला कार्य]
+चरण 2: [दूसरा कार्य]
+...
+नोट: [महत्वपूर्ण टिप्पणी यदि आवश्यक]
+
+नीतियाँ:
+${POLICIES}`
+  }
+};
+
+let currentLang = 'en';
+let isTyping = false;
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['en','ar','tl','hi'][i] === lang);
+  });
+  const L = LANG[lang];
+  document.getElementById('h-title').textContent = L.header;
+  document.getElementById('h-sub').textContent = L.subheader;
+  document.getElementById('wc-title').textContent = L.welcome_title;
+  document.getElementById('wc-body').textContent = L.welcome_body;
+  document.getElementById('userInput').placeholder = L.placeholder;
+  document.getElementById('disclaimer-text').textContent = L.disclaimer;
+  document.body.classList.toggle('rtl', lang === 'ar');
+  renderQuickTopics();
+}
+
+function renderQuickTopics() {
+  const container = document.getElementById('quickTopics');
+  container.innerHTML = '';
+  LANG[currentLang].quick.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-btn';
+    btn.textContent = q;
+    btn.onclick = () => { document.getElementById('userInput').value = q; sendMessage(); };
+    container.appendChild(btn);
+  });
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+// Parse AI response into structured steps
+function parseSteps(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  let title = '';
+  let steps = [];
+  let note = '';
+
+  for (const line of lines) {
+    // Title: **...**
+    if (line.startsWith('**') && line.endsWith('**')) {
+      title = line.replace(/\*\*/g, '').trim();
+    }
+    // Arabic step: الخطوة N: or Step N:
+    else if (/^(step\s*\d+|الخطوة\s*\d+|hakbang\s*\d+|चरण\s*\d+)\s*:/i.test(line)) {
+      const colon = line.indexOf(':');
+      const stepText = line.substring(colon + 1).trim();
+      const isAlert = /stop|call|immediately|urgent|فوراً|أوقف|urgent|ngayon|तुरंत|रोकें/i.test(stepText);
+      steps.push({ text: stepText, alert: isAlert });
+    }
+    // Note
+    else if (/^(note:|ملاحظة:|tandaan:|नोट:)/i.test(line)) {
+      note = line.replace(/^(note:|ملاحظة:|tandaan:|नोट:)/i, '').trim();
+    }
+    // Fallback: plain numbered 1. 2. 3.
+    else if (/^\d+[\.\)]\s/.test(line)) {
+      const stepText = line.replace(/^\d+[\.\)]\s/, '').trim();
+      const isAlert = /stop|call|immediately|urgent|فوراً|أوقف/i.test(stepText);
+      steps.push({ text: stepText, alert: isAlert });
+    }
+  }
+
+  // If parsing failed, fall back to raw text
+  if (steps.length === 0) {
+    return { raw: text };
+  }
+
+  return { title, steps, note };
+}
+
+function buildBotBubble(parsed) {
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+
+  if (parsed.raw) {
+    // Fallback: plain text
+    bubble.textContent = parsed.raw;
+    return bubble;
+  }
+
+  const isRTL = currentLang === 'ar';
+  if (isRTL) bubble.style.direction = 'rtl';
+
+  if (parsed.title) {
+    const lbl = document.createElement('div');
+    lbl.className = 'step-label';
+    lbl.textContent = parsed.title;
+    bubble.appendChild(lbl);
+  }
+
+  const list = document.createElement('div');
+  list.className = 'step-list';
+
+  parsed.steps.forEach((s, i) => {
+    const item = document.createElement('div');
+    item.className = 'step-item' + (s.alert ? ' alert' : '');
+
+    const num = document.createElement('div');
+    num.className = 'step-num';
+    num.textContent = i + 1;
+
+    const txt = document.createElement('div');
+    txt.className = 'step-text';
+    txt.textContent = s.text;
+
+    if (isRTL) {
+      item.appendChild(txt);
+      item.appendChild(num);
+    } else {
+      item.appendChild(num);
+      item.appendChild(txt);
+    }
+    list.appendChild(item);
+  });
+
+  bubble.appendChild(list);
+
+  if (parsed.note) {
+    const noteEl = document.createElement('div');
+    noteEl.className = 'step-note';
+    noteEl.textContent = 'Note: ' + parsed.note;
+    bubble.appendChild(noteEl);
+  }
+
+  return bubble;
+}
+
+function addMessage(text, role) {
+  const area = document.getElementById('chatArea');
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `msg-avatar ${role === 'bot' ? 'bot-avatar' : 'user-avatar'}`;
+  avatar.textContent = role === 'bot' ? '+' : 'N';
+
+  let bubble;
+  if (role === 'bot') {
+    const parsed = parseSteps(text);
+    bubble = buildBotBubble(parsed);
+  } else {
+    bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+  }
+
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  area.appendChild(msg);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addTyping() {
+  const area = document.getElementById('chatArea');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot';
+  wrap.id = 'typingIndicator';
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar bot-avatar';
+  avatar.textContent = '+';
+  const bubble = document.createElement('div');
+  bubble.className = 'typing-bubble';
+  bubble.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  wrap.appendChild(avatar);
+  wrap.appendChild(bubble);
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  if (isTyping) return;
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  isTyping = true;
+
+  addMessage(text, 'user');
+  addTyping();
+
+  const L = LANG[currentLang];
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: L.system,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+
+    const data = await res.json();
+    removeTyping();
+
+    const reply = data.content && data.content[0] && data.content[0].text
+      ? data.content[0].text
+      : L.noAnswer;
+
+    addMessage(reply, 'bot');
+  } catch (err) {
+    removeTyping();
+    addMessage('Connection error. Please check your network and try again.', 'bot');
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  isTyping = false;
+}
+
+renderQuickTopics();
+</script>
+</body>
+</html>
